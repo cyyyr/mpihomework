@@ -10,6 +10,10 @@
     real(8), allocatable :: current_column(:), B(:,:)
     real(8) :: current_sum, max_sum
     logical :: transpos
+    integer :: ierr, s1ze, rank
+    
+    call MPI_Comm_rank (MPI_COMM_WORLD, rank, ierr)
+    call MPI_Comm_size (MPI_COMM_WORLD, s1ze, ierr)
 
     m = size(A, dim=1) 
     n = size(A, dim=2) 

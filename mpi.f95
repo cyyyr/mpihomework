@@ -11,13 +11,13 @@
             real(8), allocatable :: current_column(:), B(:,:)
             real(8) :: current_sum, max_sum
             logical :: transpos
-            integer :: ierr, s1ze, rank, myop, extent, blockcounts(2), offsets(2), types(2), mytype
+            integer :: ierr, s1ze, rank
 
             call MPI_Comm_rank (MPI_COMM_WORLD, rank, ierr)
             call MPI_Comm_size (MPI_COMM_WORLD, s1ze, ierr)
 
-            m = size(A, dim=1) 
-            n = size(A, dim=2) 
+            m = size(A, dim = 1) 
+            n = size(A, dim = 2) 
             allocate (current_column(m))
             transpos = .FALSE.
 
@@ -25,20 +25,20 @@
                 allocate (B(n, m))
                 transpos = .TRUE.   
                 B = transpose(A)
-                m = size(B, dim=1) 
-                n = size(B, dim=2) 
+                m = size(B, dim = 1) 
+                n = size(B, dim = 2) 
             else
                 allocate(B(m, n))
                 B = A     
             endif
 
-            max_sum=B(1, 1)
-            x1=1
-            y1=1
-            x2=1
-            y2=1
+            max_sum = B(1, 1)
+            x1 = 1
+            y1 = 1
+            x2 = 1
+            y2 = 1
 
-            do L=1+rank, n, s1ze
+            do L = 1 + rank, n, s1ze
                 current_column = B(:, L)  
 
                 do R=L, size(current_column)
@@ -48,24 +48,15 @@
 
                     call FindMaxInArray (current_column, current_sum, Up, Down)
 
-                    if (current_sum > local_res%local_max_sum) then
-                         local_res%local_max_sum = current_sum
-                         local_res%bestX1 = Up
-                         local_res%bestX2 = Down
-                         local_res%bestY1 = L
-                         local_res%bestY2 = R
+                    if (current_sum > max_sum) then
+                         max_sum = current_sum
+                         x1 = Up
+                         x2 = Down
+                         y1 = L
+                         y2 = R
                     endif
                 end do
             end do
-
-
-            if (rank == 0) then                   
-                max_sum = res%local_max_sum
-                x1 = res%bestX1
-                y1 = res%bestY1
-                x2 = res%bestX2
-                y2 = res%bestY2
-            end if
 
 
             if (transpos) then  

@@ -9,12 +9,14 @@
             integer(4), intent(out) :: x1, y1, x2, y2
             integer(4) :: n, L, R, Up, Down, m, tmp
             real(8), allocatable :: current_column(:), B(:,:)
-            real(8) :: current_sum, max_sum, local_max_sum
+            real(8) :: current_sum, max_sum, local_max_sum(2), maxsum_and_rank(2)
             logical :: transpos
             integer :: ierr, s1ze, rank
 
             call MPI_Comm_rank (MPI_COMM_WORLD, rank, ierr)
             call MPI_Comm_size (MPI_COMM_WORLD, s1ze, ierr)
+            
+            local_max_sum(2) = rank
 
             m = size(A, dim = 1) 
             n = size(A, dim = 2) 
@@ -48,8 +50,8 @@
 
                     call FindMaxInArray (current_column, current_sum, Up, Down)
 
-                    if (current_sum > local_max_sum) then
-                         local_max_sum = current_sum
+                    if (current_sum > local_max_sum(1)) then
+                         local_max_sum(1) = current_sum
                          x1 = Up
                          x2 = Down
                          y1 = L
@@ -57,18 +59,15 @@
                     endif
                 end do
             end do
-        write(*,*) local_max_sum, "x1=",x1," y1=", y1, "x2=",x2," y2=", y2, "rank:",rank
-            call MPI_Allreduce (local_max_sum, max_sum, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ierr)
-            call MPI_Barrier(MPI_COMM_WORLD, ierr)
-            if ( max_sum == local_max_sum ) then
-            write(*,*) "rank:",rank
-                    call MPI_Bcast(x1, 1, MPI_INT, rank, MPI_COMM_WORLD, ierr)
-                    call MPI_Bcast(x2, 1, MPI_INT, rank, MPI_COMM_WORLD, ierr)
-                    call MPI_Bcast(y1, 1, MPI_INT, rank, MPI_COMM_WORLD, ierr)
-                    call MPI_Bcast(y2, 1, MPI_INT, rank, MPI_COMM_WORLD, ierr)
-            end if
-            call MPI_Barrier(MPI_COMM_WORLD, ierr)
-            write(*,*) max_sum, "11x1=",x1," y1=", y1, "x2=",x2," y2=", y2
+            
+            call MPI_Reduce(local_max_sum, maxsum_and_rank(:), 1, MPI_2DOUBLE_PRECISION, MPI_MAXLOC, 0, MPI_COMM_WORLD, ierr)
+            call MPI_Reduce(local_max_sum(1), max_sum, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(max_sum, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(maxsum_and_rank(2), 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(x1, 1, MPI_INT, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(x2, 1, MPI_INT, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(y1, 1, MPI_INT, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(y2, 1, MPI_INT, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)
 
             if (transpos) then  
                 tmp = x1

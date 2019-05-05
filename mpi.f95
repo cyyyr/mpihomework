@@ -63,7 +63,7 @@
             call MPI_Reduce(local_max_sum, maxsum_and_rank(:), 1, MPI_2DOUBLE_PRECISION, MPI_MAXLOC, 0, MPI_COMM_WORLD, ierr)
             call MPI_Reduce(local_max_sum(1), max_sum, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(max_sum, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
-            call MPI_Bcast(maxsum_and_rank(2), 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+            call MPI_Bcast(maxsum_and_rank(2), 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(x1, 1, MPI_INTEGER4, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)
             call MPI_Bcast(x2, 1, MPI_INTEGER4, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)
             call MPI_Bcast(y1, 1, MPI_INTEGER4, int(maxsum_and_rank(2)), MPI_COMM_WORLD, ierr)

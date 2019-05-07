@@ -11,12 +11,11 @@
             real(8), allocatable :: current_column(:), B(:,:)
             real(8) :: current_sum, max_sum, local_max_sum
             logical :: transpos
-            integer :: ierr, s1ze, rank, maxsum_rank
+            integer(4) :: ierr, s1ze, rank, maxsum_rank, request
+            integer(4), dimension(MPI_STATUS_SIZE) :: status
 
             call MPI_Comm_rank (MPI_COMM_WORLD, rank, ierr)
             call MPI_Comm_size (MPI_COMM_WORLD, s1ze, ierr)
-            
-            local_max_sum(2) = rank
 
             m = size(A, dim = 1) 
             n = size(A, dim = 2) 
@@ -61,9 +60,15 @@
             end do
             
             call MPI_AllReduce(local_max_sum, max_sum, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ierr)
-            if (local_max_sum == max_sum) maxsum_rank=rank
-            call MPI_Bcast(max_sum, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
-            call MPI_Bcast(maxsum_rank, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
+            if (local_max_sum == max_sum) maxsum_rank = rank
+            if (rank == 0) then
+                call MPI_IRecv(maxsum_rank, 1, MPI_INTEGER4, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, request, ierr)
+            else if (rank == maxsum_rank) then 
+                call MPI_ISend(maxsum_rank, 1, MPI_INTEGER4, 0, 555, MPI_COMM_WORLD, request, ierr)
+            endif
+            call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
+            call MPI_Bcast(maxsum_rank, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(x1, 1, MPI_INTEGER4, maxsum_rank, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(x2, 1, MPI_INTEGER4, maxsum_rank, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(y1, 1, MPI_INTEGER4, maxsum_rank, MPI_COMM_WORLD, ierr)

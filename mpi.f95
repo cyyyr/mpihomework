@@ -11,7 +11,7 @@
             real(8), allocatable :: current_column(:), B(:,:)
             real(8) :: current_sum, max_sum, local_max_sum
             logical :: transpos
-            integer(4) :: ierr, s1ze, rank, maxsum_rank, request
+            integer(4) :: ierr, s1ze, rank, maxsum_rank, request, num_of_max, onemax
             integer(4), dimension(MPI_STATUS_SIZE) :: status
 
             call MPI_Comm_rank (MPI_COMM_WORLD, rank, ierr)
@@ -59,13 +59,22 @@
                 end do
             end do
             
+            num_of_max =  0
+            onemax = 0
+            
             call MPI_AllReduce(local_max_sum, max_sum, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ierr)
-            if (local_max_sum == max_sum) maxsum_rank = rank
-            if (rank == 0) then
-                call MPI_IRecv(maxsum_rank, 1, MPI_INTEGER4, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, request, ierr)
-            else if (rank == maxsum_rank) then 
-                call MPI_ISend(maxsum_rank, 1, MPI_INTEGER4, 0, 555, MPI_COMM_WORLD, request, ierr)
-            endif
+            if (local_max_sum == max_sum) then
+                maxsum_rank = rank
+                onemax = 1
+            end if
+            call MPI_Reduce(onemax, num_of_max, 1, MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+            do while (num_of_max .ne. 0)
+                num_of_max = num_of_max - 1
+                call MPI_Recv(maxsum_rank, 1, MPI_INTEGER4, MPI_ANY_SOURCE, &
+                MPI_ANY_TAG, MPI_COMM_WORLD, status, ierr)
+            end do
+            if (rank == maxsum_rank) call MPI_ISend(maxsum_rank, 1, & 
+            MPI_INTEGER4, 0, 555, MPI_COMM_WORLD, request, ierr)
             call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
             call MPI_Bcast(maxsum_rank, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ierr)

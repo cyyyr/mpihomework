@@ -75,7 +75,6 @@
             end do
             if (rank == maxsum_rank) call MPI_ISend(maxsum_rank, 1, & 
             MPI_INTEGER4, 0, 555, MPI_COMM_WORLD, request, ierr)
-            call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
             call MPI_Bcast(maxsum_rank, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(x1, 1, MPI_INTEGER4, maxsum_rank, MPI_COMM_WORLD, ierr)

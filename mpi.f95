@@ -62,7 +62,7 @@
             
             call MPI_AllReduce(local_max_sum, max_sum, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ierr)
             if (local_max_sum == max_sum) local_maxsum_rank = rank
-            call MPI_AllReduce(local_maxsum_rank, maxsum_rank, 1, MPI_INTEGER4, MPI_MAX, 0, MPI_COMM_WORLD, ierr)
+            call MPI_AllReduce(local_maxsum_rank, maxsum_rank, 1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ierr)
 
             call MPI_Bcast(maxsum_rank, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ierr)
             call MPI_Bcast(x1, 1, MPI_INTEGER4, maxsum_rank, MPI_COMM_WORLD, ierr)
